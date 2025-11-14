@@ -7,10 +7,10 @@ async function createNoticia(req, res) {
 
   try {
     const result = await pool.query(
-      `INSERT INTO noticias (titulo, link, postagem, exibir, filepath)
-       VALUES ($1, $2, $3, $4, $5)
+      `INSERT INTO noticias (titulo, link, postagem, exibir)
+       VALUES ($1, $2, $3, $4)
        RETURNING *`,
-      [titulo, link, postagem, exibir, filepath],
+      [titulo, link, postagem, exibir],
     );
 
     const noticia = result.rows[0];

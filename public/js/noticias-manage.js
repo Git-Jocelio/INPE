@@ -1,321 +1,167 @@
-/* eslint-env browser */
+/*substitui o noticias-manage.js do arley pelo o meu */
 
-const flashEl = document.getElementById("flash");
-const tbody = document.getElementById("news-body");
-const reloadBtn = document.getElementById("btn-reload");
-const createForm = document.getElementById("form-create");
-const editForm = document.getElementById("form-edit");
-const editHint = document.getElementById("edit-hint");
-const logoutBtn = document.getElementById("btn-logout");
-const editFields = [
-  document.getElementById("edit-titulo"),
-  document.getElementById("edit-link"),
-  document.getElementById("edit-postagem"),
-  document.getElementById("edit-exibir"),
-  document.getElementById("edit-imagem"),
-  document.getElementById("btn-edit-submit"),
-];
-const modalEl = document.getElementById("confirm-modal");
-const modalText = document.getElementById("confirm-text");
-const modalCancel = document.getElementById("confirm-cancel");
-const modalAccept = document.getElementById("confirm-accept");
 
-let noticiasState = [];
-let selectedId = null;
-let pendingDelete = null;
+// URL da API
+const API_URL = "http://localhost:3000/api/noticias";
 
-function setFlash(message, type = "") {
-  flashEl.className = "msg";
-  if (message) {
-    flashEl.textContent = message;
-    flashEl.classList.add(type || "success");
-  } else {
-    flashEl.textContent = "";
-  }
-}
 
-function logout() {
-  localStorage.removeItem("token");
-  localStorage.removeItem("usuario");
-  document.cookie = "token=; path=/; max-age=0";
-  window.location.href = "/login.html";
-}
-
-function toggleEditForm(enabled) {
-  editFields.forEach((el) => {
-    el.disabled = !enabled;
-  });
-  if (!enabled) {
-    editForm.reset();
-    document.getElementById("edit-id").value = "";
-    editHint.textContent =
-      "Selecione uma notícia na tabela para carregar os dados.";
-  } else {
-    editHint.textContent = `Editando notícia #${selectedId}`;
-  }
-}
-
-function getToken() {
-  return localStorage.getItem("token");
-}
-
-async function apiFetch(path, options = {}) {
-  const headers = new Headers(options.headers || {});
-  const token = getToken();
-  if (token) {
-    headers.set("Authorization", `Bearer ${token}`);
-  }
-
-  const opts = {
-    credentials: "include",
-    ...options,
-    headers,
-  };
-
-  const res = await fetch(path, opts);
-  const text = await res.text();
-  let data = null;
-  if (text) {
-    try {
-      data = JSON.parse(text);
-    } catch {
-      data = text;
-    }
-  }
-  if (!res.ok) {
-    if (res.status === 401) {
-      window.location.href = "/login.html";
-    }
-    const msg =
-      (data && (data.error || data.message)) ||
-      `Erro ao comunicar com o servidor (HTTP ${res.status})`;
-    throw new Error(msg);
-  }
-  return data;
-}
-
-function toInputDate(value) {
-  if (!value) return "";
-  if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}/.test(value)) {
-    return value.slice(0, 10);
-  }
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "";
-  return date.toISOString().slice(0, 10);
-}
-
-function formatDate(value) {
-  const iso = toInputDate(value);
-  if (!iso) return "—";
-  const [year, month, day] = iso.split("-");
-  return `${day}/${month}/${year}`;
-}
-
-function renderNoticias(lista) {
-  tbody.innerHTML = "";
-  if (!lista || lista.length === 0) {
-    const row = document.createElement("tr");
-    row.innerHTML =
-      '<td class="empty" colspan="3">Nenhuma notícia cadastrada.</td>';
-    tbody.appendChild(row);
-    return;
-  }
-
-  lista.forEach((noticia) => {
-    const tr = document.createElement("tr");
-    const dateDisplay = formatDate(noticia.postagem);
-    tr.innerHTML = `
-      <td>${noticia.titulo ?? ""}</td>
-      <td>${dateDisplay}</td>
-      <td>
-        <div class="actions">
-          <button class="edit" type="button" data-action="edit" data-id="${noticia.idnoticia}">Editar</button>
-          <button class="delete" type="button" data-action="delete" data-id="${noticia.idnoticia}">Excluir</button>
-        </div>
-      </td>
-    `;
-    tbody.appendChild(tr);
-  });
-}
-
+// Função para buscar e exibir as notícias
 async function carregarNoticias() {
   try {
-    const data = await apiFetch("/api/noticias/admin/all");
-    noticiasState = Array.isArray(data) ? data : [];
-    renderNoticias(noticiasState);
-  } catch (err) {
-    setFlash(err.message, "error");
+    const resposta = await fetch(API_URL);
+    const noticias = await resposta.json();
+
+    const tabela = document.getElementById("lista-noticias");
+    tabela.innerHTML = ""; // limpa antes de inserir
+
+    noticias.forEach(noticia => {
+      const linha = document.createElement("tr");
+
+      linha.innerHTML = `
+        <td>${noticia.idnoticia}</td>
+        <td>${noticia.titulo}</td>
+        <td><a href="${noticia.link}" target="_blank">Acessar</a></td>
+        <td>${new Date(noticia.postagem).toLocaleDateString()}</td>
+        <td>${noticia.exibir ? "Sim" : "Não"}</td>
+        <td>
+          <button onclick="editarNoticia(${noticia.idnoticia})">✏️ Editar</button>
+          <button onclick="excluirNoticia(${noticia.idnoticia})">🗑️ Excluir</button>
+        </td>
+      `;
+
+      tabela.appendChild(linha);
+    });
+  } catch (erro) {
+    
+    document.getElementById("lista-noticias").innerHTML =
+      `<tr><td colspan="6">Erro ao carregar notícias.</td></tr>`;
   }
 }
 
-function preencherEditar(id) {
-  const noticia = noticiasState.find((n) => n.idnoticia === id);
-  if (!noticia) {
-    setFlash("Notícia não encontrada.", "error");
+
+// 🔹 Adicionar ou atualizar notícia (POST ou PUT)
+
+async function adicionarNoticia(event) {
+  event.preventDefault(); // evita recarregar a página
+
+  const titulo = document.getElementById("titulo").value.trim();
+  const link = document.getElementById("link").value.trim();
+  const postagem = document.getElementById("postagem").value;
+  const mensagem = document.getElementById("mensagem");
+  const exibir = document.getElementById("exibir").checked;
+
+  if (!titulo || !link || !postagem) {
+    mensagem.textContent = "Preencha todos os campos!";
+    mensagem.style.color = "red";
     return;
   }
-  selectedId = id;
-  document.getElementById("edit-id").value = id;
-  document.getElementById("edit-titulo").value = noticia.titulo || "";
-  document.getElementById("edit-link").value = noticia.link || "";
-  document.getElementById("edit-postagem").value = toInputDate(
-    noticia.postagem,
-  );
-  document.getElementById("edit-exibir").value = String(
-    noticia.exibir !== false,
-  );
-  document.getElementById("edit-imagem").value = "";
-  toggleEditForm(true);
-}
 
-function openDeleteConfirm(id) {
-  const noticia = noticiasState.find((n) => n.idnoticia === id);
-  if (!noticia) {
-    setFlash("Notícia não encontrada.", "error");
-    return;
+  // Descobre se estamos editando ou criando
+  const idEditando = document
+    .getElementById("form-noticia")
+    .dataset.editandoId || null;
+
+  const metodo = idEditando ? "PUT" : "POST";
+  const url = idEditando ? `${API_URL}/${idEditando}` : API_URL;
+
+  mensagem.textContent = "Salvando...";
+  mensagem.style.color = "black";
+
+  try {
+    const resposta = await fetch(url, {
+      method: metodo,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ titulo, link, postagem, exibir }),
+    });
+
+    if (!resposta.ok) {
+      throw new Error("Erro ao salvar notícia.");
+    }
+
+    mensagem.textContent = idEditando
+      ? "✅ Notícia atualizada com sucesso!"
+      : "✅ Notícia adicionada com sucesso!";
+    mensagem.style.color = "green";
+
+    document.getElementById("form-noticia").reset();
+    delete document.getElementById("form-noticia").dataset.editandoId; // limpa modo edição
+
+    carregarNoticias(); // recarrega lista
+  } catch (erro) {
+    
+    mensagem.textContent = "❌ Erro ao salvar notícia.";
+    mensagem.style.color = "red";
   }
-  pendingDelete = noticia;
-  modalText.textContent = `Deseja realmente excluir "${noticia.titulo}"? Esta ação é irreversível.`;
-  modalEl.classList.add("open");
 }
 
-function closeModal() {
-  pendingDelete = null;
-  modalEl.classList.remove("open");
-}
+// 🔹 Eventos e inicialização
+document.getElementById("form-noticia").addEventListener("submit", adicionarNoticia);
 
+// ✅ Função para excluir uma notícia (DELETE)
 async function excluirNoticia(id) {
-  await apiFetch(`/api/noticias/${id}`, { method: "DELETE" });
-  if (selectedId === id) {
-    selectedId = null;
-    toggleEditForm(false);
-  }
-  await carregarNoticias();
-  setFlash("Notícia excluída com sucesso.", "success");
-}
-
-async function handleCreateSubmit(event) {
-  event.preventDefault();
-  const titulo = document.getElementById("create-titulo").value.trim();
-  const link = document.getElementById("create-link").value.trim();
-  const postagem = document.getElementById("create-postagem").value;
-  const exibir = document.getElementById("create-exibir").value;
-  const imagem = document.getElementById("create-imagem").files[0] || null;
-
-  if (!titulo || !postagem) {
-    setFlash("Informe título e data para criar a notícia.", "error");
-    return;
-  }
-
-  const formData = new FormData();
-  formData.append("titulo", titulo);
-  if (link) formData.append("link", link);
-  formData.append("postagem", postagem);
-  formData.append("exibir", exibir === "true");
-  if (imagem) formData.append("imagem", imagem);
+  if (!confirm("Deseja realmente excluir esta notícia?")) return;
 
   try {
-    await apiFetch("/api/noticias", {
-      method: "POST",
-      body: formData,
+    const response = await fetch(`${API_URL}/${id}`, {
+      method: "DELETE",
     });
-    createForm.reset();
-    setFlash("Notícia criada com sucesso.", "success");
-    await carregarNoticias();
-  } catch (err) {
-    setFlash(err.message, "error");
+
+    const data = await response.json();
+    alert(data.message || "Notícia excluída com sucesso!");
+
+    carregarNoticias(); // recarrega a lista
+  } catch (error) {
+    
+    alert("Erro ao excluir notícia.");
   }
 }
 
-async function handleEditSubmit(event) {
-  event.preventDefault();
-  if (!selectedId) {
-    setFlash("Selecione uma notícia para editar.", "error");
-    return;
-  }
-
-  const titulo = document.getElementById("edit-titulo").value.trim();
-  const link = document.getElementById("edit-link").value.trim();
-  const postagem = document.getElementById("edit-postagem").value;
-  const exibir = document.getElementById("edit-exibir").value;
-  const imagem = document.getElementById("edit-imagem").files[0] || null;
-
-  if (!titulo || !postagem) {
-    setFlash("Informe título e data de postagem.", "error");
-    return;
-  }
-
-  const formData = new FormData();
-  formData.append("titulo", titulo);
-  if (link) formData.append("link", link);
-  else formData.append("link", "");
-  formData.append("postagem", postagem);
-  formData.append("exibir", exibir === "true");
-  if (imagem) formData.append("imagem", imagem);
-
+// Função para EDITAR uma notícia
+async function editarNoticia(id) {
   try {
-    await apiFetch(`/api/noticias/${selectedId}`, {
-      method: "PUT",
-      body: formData,
-    });
-    document.getElementById("edit-imagem").value = "";
-    setFlash("Notícia atualizada com sucesso.", "success");
-    await carregarNoticias();
-  } catch (err) {
-    setFlash(err.message, "error");
+    // Busca a notícia específica na API
+    const resposta = await fetch(`${API_URL}/${id}`);
+    if (!resposta.ok) throw new Error("Erro ao buscar notícia para edição.");
+
+    const noticia = await resposta.json();
+
+    // Torna o formulário visível (caso esteja oculto)
+    formSection.style.display = "block";
+    botaoMostrarForm.textContent = "❌ Fechar formulário";
+
+    // Preenche os campos do formulário com os dados da notícia
+    document.getElementById("titulo").value = noticia.titulo;
+    document.getElementById("link").value = noticia.link;
+    document.getElementById("postagem").value = noticia.postagem.split("T")[0];
+    document.getElementById("exibir").checked = noticia.exibir;
+
+    // Guarda o ID da notícia em edição (vamos usar depois no update)
+    document.getElementById("form-noticia").dataset.editandoId = noticia.idnoticia;
+
+    // Exibe mensagem temporária
+    const mensagem = document.getElementById("mensagem");
+    mensagem.textContent = "✏️ Editando notícia ID " + noticia.idnoticia;
+    mensagem.style.color = "blue";
+  } catch (erro) {
+    
+    alert("Erro ao carregar notícia para edição.");
   }
 }
 
-function init() {
-  toggleEditForm(false);
-  carregarNoticias();
 
-  if (logoutBtn) {
-    logoutBtn.addEventListener("click", () => {
-      logout();
-    });
-  }
+//Controle de exibição do formulário
+const botaoMostrarForm = document.getElementById("btn-mostrar-form");
+const formSection = document.getElementById("form-section");
 
-  reloadBtn.addEventListener("click", () => {
-    setFlash("", "");
-    carregarNoticias();
-  });
+botaoMostrarForm.addEventListener("click", () => {
+  // Alterna entre mostrar e ocultar o formulário
+  const visivel = formSection.style.display === "block";
 
-  tbody.addEventListener("click", (event) => {
-    const btn = event.target.closest("button[data-action]");
-    if (!btn) return;
-    const id = Number(btn.dataset.id);
-    if (!Number.isInteger(id)) return;
-    if (btn.dataset.action === "edit") {
-      preencherEditar(id);
-    } else if (btn.dataset.action === "delete") {
-      openDeleteConfirm(id);
-    }
-  });
+  formSection.style.display = visivel ? "none" : "block";
+  botaoMostrarForm.textContent = visivel
+    ? "📰 Cadastrar nova notícia"
+    : "❌ Fechar formulário";
+});
 
-  modalCancel.addEventListener("click", closeModal);
-  modalEl.addEventListener("click", (event) => {
-    if (event.target === modalEl) {
-      closeModal();
-    }
-  });
-  modalAccept.addEventListener("click", async () => {
-    if (!pendingDelete) return;
-    const id = pendingDelete.idnoticia;
-    closeModal();
-    try {
-      await excluirNoticia(id);
-    } catch (err) {
-      setFlash(err.message, "error");
-    }
-  });
 
-  createForm.addEventListener("submit", handleCreateSubmit);
-  editForm.addEventListener("submit", handleEditSubmit);
-}
-
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", init);
-} else {
-  init();
-}
+carregarNoticias();
