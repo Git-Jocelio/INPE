@@ -22,13 +22,16 @@ async function carregarOportunidades() {
         <td>${oportunidade.descricao}</td>
         <td>${new Date(oportunidade.validade).toLocaleDateString()}</td>
         <td>${oportunidade.exibir ? "Sim" : "Não"}</td>
-        <td>
+        <td class="acoes">
+          <button class="action-btn btn-edit" onclick="editarOportunidade(${oportunidade.idoportunidade})">
+            <i class="fa-solid fa-pen-to-square"></i>
+          </button>
 
-          <button class="action-btn btn-edit" onclick="editarOportunidade(${oportunidade.idoportunidade})">Editar</button>
-          <button class="action-btn btn-delete" onclick="excluirOportunidade(${oportunidade.idoportunidade})">Excluir</button>
-
+          <button class="action-btn btn-delete" onclick="excluirOportunidade(${oportunidade.idoportunidade})">
+            <i class="fa-solid fa-trash"></i>
+          </button>
         </td>
-      `;
+            `;
 
       tabela.appendChild(linha);
     });

@@ -23,11 +23,16 @@ async function carregarNoticias() {
         <td><a href="${noticia.link}" target="_blank">Acessar</a></td>
         <td>${new Date(noticia.postagem).toLocaleDateString()}</td>
         <td>${noticia.exibir ? "Sim" : "Não"}</td>
-        <td>
-          <button onclick="editarNoticia(${noticia.idnoticia})">✏️ Editar</button>
-          <button onclick="excluirNoticia(${noticia.idnoticia})">🗑️ Excluir</button>
+        <td class="acoes">
+          <button class="action-btn btn-edit" onclick="editarNoticia(${noticia.idnoticia})">
+            <i class="fa-solid fa-pen-to-square"></i>
+          </button>
+
+          <button class="action-btn btn-delete" onclick="excluirNoticia(${noticia.idnoticia})">
+            <i class="fa-solid fa-trash"></i>
+          </button>
         </td>
-      `;
+            `;
 
       tabela.appendChild(linha);
     });
