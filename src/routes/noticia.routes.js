@@ -38,12 +38,7 @@ router.get("/", noticiaController.getAllNoticias);
 router.get("/admin/all", auth, noticiaController.getAllNoticiasAdmin);
 // Detalhe por ID (proteção via auth, para uso no admin)
 router.get("/:id", auth, noticiaController.getNoticiaById);
-router.put(
-  "/:id",
-  auth,
-  upload.single("imagem"),
-  noticiaController.updateNoticia,
-);
+router.put("/:id", auth, upload.single("imagem"), noticiaController.updateNoticia,);
 router.delete("/:id", auth, noticiaController.deleteNoticia);
 
 module.exports = router;
