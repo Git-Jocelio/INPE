@@ -97,6 +97,58 @@ async function adicionarPublicacao(event) {
 // põe um Evento no botão cadastrar publicação
 document.getElementById("form-publicacao").addEventListener("submit", adicionarPublicacao);
 
+// ✅ Função para excluir uma publicação (DELETE)
+async function excluirPublicacao(id) {
+  if (!confirm("Deseja realmente excluir esta publicação?")) return;
+
+  try {
+    const response = await fetch(`${API_URL}/${id}`, {
+      method: "DELETE",
+    });
+
+    const data = await response.json();
+    alert(data.message || "Publicação excluída com sucesso!");
+
+    carregarPublicacoes(); // recarrega a lista
+  } catch (error) {
+    
+    alert("Erro ao excluir publicação.");
+  }
+}
+
+// Função para EDITAR uma publicação
+async function editarPublicacao(id) {
+  try {
+    // Busca a notícia específica na API
+    const resposta = await fetch(`${API_URL}/${id}`);
+    if (!resposta.ok) throw new Error("Erro ao buscar publicação para edição.");
+
+    const noticia = await resposta.json();
+
+    // Torna o formulário visível (caso esteja oculto)
+    formSection.style.display = "block";
+    botaoMostrarForm.textContent = "❌ Fechar formulário";
+
+    // Preenche os campos do formulário com os dados da notícia
+    document.getElementById("texto").value = publicacao.titulo;
+    document.getElementById("ano").value = publicacao.ano;
+    document.getElementById("link").value = publicacao.link;
+    document.getElementById("doi").value = publicacao.doi;
+    document.getElementById("filePath").value = publicacao.filePath;
+
+    // Guarda o ID da notícia em edição (vamos usar depois no update)
+    document.getElementById("form-publicacao").dataset.editandoId = noticia.idpublicacao;
+
+    // Exibe mensagem temporária
+    const mensagem = document.getElementById("mensagem");
+    mensagem.textContent = "✏️ Editando notícia ID " + publicacao.idpublicacao;
+    mensagem.style.color = "blue";
+  } catch (erro) {
+    
+    alert("Erro ao carregar publicação para edição.");
+  }
+}
+
 //Controle de exibição do formulário
 const botaoMostrarForm = document.getElementById("btn-mostrar-form");
 const formSection = document.getElementById("form-section");

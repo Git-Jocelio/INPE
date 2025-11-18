@@ -1,3 +1,4 @@
+
 const express = require("express");
 const multer = require("multer");
 const path = require("path");
@@ -41,3 +42,5 @@ router.put("/:id", auth, upload.single("imagem"), publicacaoController.updatePub
 router.delete("/:id", auth, publicacaoController.deletePublicacao);
 
 module.exports = router;
+
+
