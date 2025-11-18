@@ -43,9 +43,7 @@ async function carregarNoticias() {
   }
 }
 
-
 // 🔹 Adicionar ou atualizar notícia (POST ou PUT)
-
 async function adicionarNoticia(event) {
   event.preventDefault(); // evita recarregar a página
 

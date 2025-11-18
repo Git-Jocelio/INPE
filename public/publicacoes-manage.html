@@ -5,6 +5,10 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Gestão de Publicações</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css"
+    integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
+
   <style>
     /* ======== ESTILO GLOBAL ======== */
     body {
@@ -62,13 +66,13 @@
       color: #111827;
     }
 
-    #form-noticia {
+    #form-publicacao {
       display: flex;
       flex-wrap: wrap;
       gap: 12px;
     }
 
-    #form-noticia input {
+    #form-publicacao input {
       flex: 1;
       padding: 10px;
       border-radius: 8px;
@@ -77,13 +81,13 @@
       transition: 0.2s;
     }
 
-    #form-noticia input:focus {
+    #form-publicacao input:focus {
       border-color: #2563eb;
       outline: none;
       background: #fff;
     }
 
-    #form-noticia button {
+    #form-publicacao button {
       background-color: #16a34a;
       color: white;
       border: none;
@@ -93,7 +97,7 @@
       transition: 0.2s;
     }
 
-    #form-noticia button:hover {
+    #form-publicacao button:hover {
       background-color: #15803d;
     }
 
@@ -180,10 +184,65 @@
       font-weight: 600;
       color: #16a34a;
     }
+
+    td.acoes {
+      display: flex;
+      gap: 6px;
+      /* espaço entre os botões */
+      align-items: center;
+    }
   </style>
+
 </head>
 
 <body>
+  <header class="site-header">
+    <h1>AgriLab - Adicionar, Alterar ou Excluir Publicações</h1>
+    <p class="subtitle">Últimas publicações do laboratório</p>
+  </header>
+
+    <!-- Botão para mostrar o formulário -->
+  <section id="botao-section">
+    <button id="btn-mostrar-form">📰 Cadastrar nova publicação</button>
+  </section> <br>
+
+    <!-- 🆕 Formulário de inclusão -->
+  <section id="form-section" style="display: none;">
+    <h3>Adicionar nova publicação</h3>
+    <form id="form-publicacao">
+      <input type="text" id="texto" placeholder="Texto da publicação" required>
+      <input type="text" id="ano" placeholder="Ano da publicação" required>
+      <input type="url" id="link" placeholder="Link da publicação" required>
+      <input type="text" id="doi" placeholder="Doi da publicação" required>
+      <input type="url" id="filePath" placeholder="Link da imagem" required>
+      <button type="submit">Salvar</button>
+    </form>
+    <p id="mensagem"></p>
+  </section>
+
+  <!-- Tabela de publicação -->
+  <section id="tabela-section">
+    <h3>Lista de Publicações</h3>
+    <table border="1" width="100%">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Texto</th>
+          <th>Ano</th>
+          <th>link da publicacao</th>
+          <th>Doi</th>
+          <th>filePath</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody id="lista-publicacoes">
+        <!-- As notícias serão inseridas aqui via JavaScript -->
+      </tbody>
+    </table>
+  </section>
+
+  <script src="/js/publicacoes-manage.js"></script>
+
 
 </body>
 

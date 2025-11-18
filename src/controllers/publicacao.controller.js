@@ -7,7 +7,7 @@ async function createPublicacao(req, res) {
 
   try {
     const result = await pool.query(
-      "INSERT INTO publicacoes (texto, ano, link, doi, filepath) VALUES ($1, $2, $3, $4, $5) RETURNING *",
+      "INSERT INTO publicacoes (texto, ano, link, doi, filePath) VALUES ($1, $2, $3, $4, $5) RETURNING *",
       [texto, ano, link, doi, filepath],
     );
 
@@ -63,7 +63,7 @@ async function updatePublicacao(req, res) {
     let result;
     if (filepath) {
       result = await pool.query(
-        "UPDATE publicacoes SET texto = $1, ano = $2, link = $3, doi = $4, filepath = $5 WHERE idpublicacao = $6 RETURNING *",
+        "UPDATE publicacoes SET texto = $1, ano = $2, link = $3, doi = $4, filePath = $5 WHERE idpublicacao = $6 RETURNING *",
         [texto, ano, link, doi, filepath, id],
       );
     } else {

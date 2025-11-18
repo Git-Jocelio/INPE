@@ -37,12 +37,7 @@ router.post(
 router.get("/", publicacaoController.getAllPublicacoes);
 router.get("/admin/all", auth, publicacaoController.getAllPublicacoes);
 router.get("/:id", auth, publicacaoController.getPublicacaoById);
-router.put(
-  "/:id",
-  auth,
-  upload.single("imagem"),
-  publicacaoController.updatePublicacao,
-);
+router.put("/:id", auth, upload.single("imagem"), publicacaoController.updatePublicacao,);
 router.delete("/:id", auth, publicacaoController.deletePublicacao);
 
 module.exports = router;
